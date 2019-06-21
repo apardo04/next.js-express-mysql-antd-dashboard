@@ -4,15 +4,17 @@ const uuid = require('uuid');
 const bodyParser = require('body-parser');
 const { parse } = require('url');
 const next = require('next');
+const AppRouter = require('./routes/AppRouter');
 
 const dev =  process.env.NODE_ENV || "development";
 const PORT = process.env.PORT || 3000;
 
 const app = next({ dir: "./app", dev });
 const handle = app.getRequestHandler();
-
 const getRoutes = require('./routes');
 const routes = getRoutes();
+
+//const models=require("./db/model");
 
 app.prepare().then(() => {
     const server = express();
@@ -29,6 +31,8 @@ app.prepare().then(() => {
     server.use(bodyParser.urlencoded({ extended: true }))
     server.use(bodyParser.json());
 
+    server.use(AppRouter);
+
     server.get("*", (req ,res) => {
         const parsedUrl = parse(req.url, true);
         const { pathname, query = {} } = parsedUrl;
@@ -41,12 +45,14 @@ app.prepare().then(() => {
             return app.render(req, res, route.page, query);
         }
         handle(req, res);
-    })
+    });
 
-    server.listen(PORT, err => {
-        if (err) throw err;
-        console.log("> Starting server on port ", PORT);
-    })
+    //models.sequelize.sync().then(function() {
+        server.listen(PORT, err => {
+            if (err) throw err;
+            console.log("> Starting server on port ", PORT);
+        });
+    //});
 })
 .catch(err => {
     console.log(err);
